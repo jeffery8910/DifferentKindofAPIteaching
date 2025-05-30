@@ -93,7 +93,7 @@
         .neo-input {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #e0e0e0;
+            color: #e0e0e0; /* 選中項目的文字顏色 (顯示在輸入框中) */
             padding: 10px;
             border-radius: 8px;
             width: 100%;
@@ -101,9 +101,15 @@
         }
         .neo-input:focus {
             outline: none;
-            border-color: #5096FF; /* 亮藍色強調 */
+            border-color: #5096FF; 
             box-shadow: 0 0 0 2px rgba(80, 150, 255, 0.5);
         }
+        /* 下拉選單中選項的樣式 */
+        .neo-input option {
+            color: #343a40; /* 選項文字顏色 (用於下拉列表中的文字) - 改為較深的顏色 */
+            background-color: #ffffff; /* 選項背景顏色 (瀏覽器通常預設為淺色) */
+        }
+
 
         /* 程式碼區塊 */
         .code-block {
@@ -138,7 +144,7 @@
             line-height: 1.7;
             margin-bottom: 1rem;
         }
-        ul:not(.list-none) { /* 預設 ul 有 padding，除非指定 list-none */
+        ul:not(.list-none) { 
             list-style-position: inside;
             padding-left: 0; 
         }
@@ -209,21 +215,21 @@
             padding: 15px;
             text-align: center;
             border: 1px solid rgba(255,255,255,0.1);
-            display: flex; /* 新增 */
-            flex-direction: column; /* 新增 */
-            justify-content: center; /* 新增 */
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
         }
         .analogy-card strong {
             display: block;
             font-size: 1.1rem;
-            color: #82aaff; /* 亮藍色 */
+            color: #82aaff; 
             margin-bottom: 0.5rem;
         }
-        .analogy-card .description { /* 新增 class */
-            display: block; /* 確保換行 */
-            font-size: 0.8rem; /* 較小字體 */
-            color: #b0bec5; /* 稍淺的描述文字顏色 */
-            margin-top: 0.25rem; /* 與上方 strong 的間距 */
+        .analogy-card .description { 
+            display: block; 
+            font-size: 0.8rem; 
+            color: #b0bec5; 
+            margin-top: 0.25rem; 
         }
 
         /* API 重要性卡片 */
@@ -235,7 +241,7 @@
         }
         .importance-card strong {
             font-size: 1rem;
-            color: #90caf9; /* 淺藍色強調 */
+            color: #90caf9; 
             margin-bottom: 0.3rem;
             display: block;
         }
@@ -243,7 +249,6 @@
             font-size: 0.85rem;
             color: #b0c4de;
         }
-
 
     </style>
 </head>
