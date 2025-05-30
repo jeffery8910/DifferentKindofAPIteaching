@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動式 API 學習網站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Inter 字體 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Neo 感毛玻璃風格容器 */
+        .neo-glass-container {
+            background: rgba(255, 255, 255, 0.05); /* 更深的玻璃背景 */
+            backdrop-filter: blur(12px) saturate(150%);
+            -webkit-backdrop-filter: blur(12px) saturate(150%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s ease;
+        }
+
+        .neo-glass-container:hover {
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        /* 分頁按鈕 */
+        .tab-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e0e0e0;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Neo Brutalist shadow */
+        }
+
+        .tab-button:hover, .tab-button.active {
+            background: rgba(80, 150, 255, 0.8); /* 亮藍色強調 */
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(80, 150, 255,0.4);
+        }
+        
+        /* 內容面板 */
+        .tab-content {
+            display: none;
+            padding: 25px;
+            border-radius: 15px;
+            background: rgba(0,0,0,0.2); /* 內容區的深色背景 */
+            min-height: 400px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Neo Brutalist 風格按鈕 */
+        .neo-button {
+            background-color: #3949AB; /* 鮮明顏色 (深藍) */
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 4px 4px 0px #1A237E; /* 硬邊陰影 (更深的藍) */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .neo-button:hover {
+            background-color: #5C6BC0; /* 懸停時稍淺 */
+            box-shadow: 2px 2px 0px #1A237E;
+            transform: translate(2px, 2px);
+        }
+        .neo-button:active {
+            background-color: #7986CB;
+            box-shadow: 0px 0px 0px #1A237E;
+            transform: translate(4px, 4px);
+        }
+
+        /* 輸入框 */
+        .neo-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #e0e0e0;
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .neo-input:focus {
+            outline: none;
+            border-color: #5096FF; /* 亮藍色強調 */
+            box-shadow: 0 0 0 2px rgba(80, 150, 255, 0.5);
+        }
+
+        /* 程式碼區塊 */
+        .code-block {
+            background: rgba(0, 0, 0, 0.5);
+            color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .code-block strong { color: #82aaff; } /* 關鍵字 */
+        .code-block span.string { color: #c3e88d; } /* 字串 */
+        .code-block span.comment { color: #637777; } /* 註解 */
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #82aaff; /* 亮藍色標題 */
+            margin-bottom: 1rem;
+            text-shadow: 0 0 5px rgba(80,150,255,0.5);
+        }
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #a2c5ff; /* 淺藍色副標題 */
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+        p {
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+        ul:not(.list-none) { /* 預設 ul 有 padding，除非指定 list-none */
+            list-style-position: inside;
+            padding-left: 0; 
+        }
+        li { margin-bottom: 0.5rem; }
+
+        /* 訊息提示 */
+        .feedback-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+        .feedback-success {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.7);
+            color: #90ee90;
+        }
+        .feedback-error {
+            background-color: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.7);
+            color: #ffcccb;
+        }
+        .feedback-info {
+            background-color: rgba(33, 150, 243, 0.2);
+            border: 1px solid rgba(33, 150, 243, 0.7);
+            color: #add8e6;
+        }
+
+        /* API 典範卡片 (通用化) */
+        .paradigm-card {
+            background: rgba(255, 255, 255, 0.08); 
+            backdrop-filter: blur(8px) saturate(120%);
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .paradigm-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .paradigm-card > h3:first-child, 
+        .paradigm-card > .interactive-area > h3:first-child { 
+            margin-top: 0;
+        }
+        .paradigm-card p {
+            font-size: 0.9rem;
+            color: #b0c4de;
+            margin-bottom: 1rem;
+        }
+        /* 針對 paradigm tab 內的按鈕樣式 */
+        #tab-paradigms .paradigm-card .neo-button {
+            padding: 10px 18px; 
+            font-size: 0.8rem; 
+            align-self: flex-start; 
+        }
+        /* 確保 tab-intro 內的列表有縮排 */
+        #tab-intro .paradigm-card ul:not(.analogy-cards):not(.importance-cards) { 
+            padding-left: 1.2em;
+        }
+        /* 餐廳比喻小卡片 */
+        .analogy-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex; /* 新增 */
+            flex-direction: column; /* 新增 */
+            justify-content: center; /* 新增 */
+        }
+        .analogy-card strong {
+            display: block;
+            font-size: 1.1rem;
+            color: #82aaff; /* 亮藍色 */
+            margin-bottom: 0.5rem;
+        }
+        .analogy-card .description { /* 新增 class */
+            display: block; /* 確保換行 */
+            font-size: 0.8rem; /* 較小字體 */
+            color: #b0bec5; /* 稍淺的描述文字顏色 */
+            margin-top: 0.25rem; /* 與上方 strong 的間距 */
+        }
+
+        /* API 重要性卡片 */
+        .importance-card {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .importance-card strong {
+            font-size: 1rem;
+            color: #90caf9; /* 淺藍色強調 */
+            margin-bottom: 0.3rem;
+            display: block;
+        }
+        .importance-card span {
+            font-size: 0.85rem;
+            color: #b0c4de;
+        }
+
+
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="neo-glass-container max-w-5xl mx-auto p-6 md:p-10">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-pink-400 to-purple-500 mb-2">
+                🚀 互動式 API 學習之旅 🚀
+            </h1>
+            <p class="text-lg text-gray-300">一步一步探索 API 的奧秘，從概念到實作！</p>
+        </header>
+
+        <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+            <button class="tab-button active" onclick="openTab(event, 'tab-intro')">🤔 什麼是 API？</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-paradigms')">📚 API 典範</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-rest')">🛠️ REST API 實戰</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-graphql')">✨ GraphQL API 體驗</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-webhooks')">🔔 WebHooks 即時通</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-rpc')">📞 RPC 概念</button>
+        </div>
+
+        <div id="tab-intro" class="tab-content active">
+            <h2>🤔 什麼是 API？</h2>
+            <div class="paradigm-card mt-4"> 
+                <p>API 全名是 <strong>Application Programming Interface (應用程式介面)</strong>。</p>
+                <h3 class="text-lg font-semibold mb-3 mt-3 text-center text-sky-300">想像一下你去餐廳吃飯：</h3>
+                <div class="grid md:grid-cols-3 gap-4 mb-6 analogy-cards">
+                    <div class="analogy-card">
+                        <strong>你 (應用程式 A)</strong>
+                        <span class="description">想點一份宮保雞丁</span>
+                    </div>
+                    <div class="analogy-card">
+                        <strong>廚房 (應用程式 B / 後端服務)</strong>
+                        <span class="description">負責做菜</span>
+                    </div>
+                    <div class="analogy-card">
+                        <strong>服務生 (API)</strong>
+                        <span class="description">你和廚房之間溝通的橋樑</span>
+                    </div>
+                </div>
+                <p>你不需要知道廚房怎麼運作，只需要告訴服務生你要什麼 (透過菜單上的選項)，服務生就會把你的請求傳達給廚房，然後把做好的菜端給你。API 就是這樣，它定義了一套規則和協定，讓不同的軟體應用程式可以互相溝通和交換資料，而不需要知道對方內部的複雜實作細節。</p>
+                
+                <h3 class="mt-4">為什麼 API 這麼重要？</h3>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2 importance-cards">
+                    <div class="importance-card">
+                        <strong>模組化</strong>
+                        <span>將複雜系統拆分成小而獨立的服務。</span>
+                    </div>
+                    <div class="importance-card">
+                        <strong>重複使用</strong>
+                        <span>一個 API 可以被多個不同的應用程式使用。</span>
+                    </div>
+                    <div class="importance-card">
+                        <strong>整合</strong>
+                        <span>讓不同的系統 (例如你的網站和支付系統) 可以協同工作。</span>
+                    </div>
+                    <div class="importance-card">
+                        <strong>創新</strong>
+                        <span>開放 API 讓開發者可以在現有服務的基礎上建立新的應用和功能。</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-blue-900/30 rounded-lg border border-blue-500/50">
+                  <p class="text-blue-300 mb-0"><strong class="text-blue-200">簡單來說：</strong> API 就像是軟體世界的「服務生」或「翻譯員」，讓不同的程式可以順暢地對話！</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-paradigms" class="tab-content">
+            <h2>📚 API 典範概覽</h2>
+            <p>API 典範定義了 API 的設計風格和通訊模式。選擇正確的典範對於 API 的成功至關重要。以下是一些常見的 API 典範：</p>
+            
+            <h3 class="mt-6 mb-4">請求-回應 (Request-Response) APIs</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <div class="paradigm-card">
+                    <div>
+                        <h4>REST (Representational State Transfer)</h4>
+                        <p>目前最流行的典範之一。以「資源」為核心，使用標準 HTTP 方法 (GET, POST, PUT, DELETE) 對資源進行操作。強調無狀態性、可快取性和統一介面。</p>
+                    </div>
+                    <button class="neo-button" onclick="navigateToTab('tab-rest')">前往 REST 實戰 &rarr;</button>
+                </div>
+                <div class="paradigm-card">
+                    <div>
+                        <h4>GraphQL</h4>
+                        <p>一種 API 的查詢語言。允許客戶端精確指定需要的資料結構，伺服器只回傳這些資料，避免過度或不足獲取。通常只有一個端點。</p>
+                    </div>
+                    <button class="neo-button" onclick="navigateToTab('tab-graphql')">前往 GraphQL 體驗 &rarr;</button>
+                </div>
+                <div class="paradigm-card">
+                    <div>
+                        <h4>RPC (Remote Procedure Call)</h4>
+                        <p>客戶端直接呼叫遠端伺服器上的函式或程序。以「動作」為核心，相對簡單直接。</p>
+                    </div>
+                    <button class="neo-button" onclick="navigateToTab('tab-rpc')">前往 RPC 概念 &rarr;</button>
+                </div>
+            </div>
+
+            <h3 class="mt-8 mb-4">事件驅動 (Event-Driven) APIs</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <div class="paradigm-card">
+                    <div>
+                        <h4>WebHooks</h4>
+                        <p>一種 HTTP 回呼機制。當事件發生時，服務提供者會向預先設定好的 URL 發送一個 HTTP POST 請求，通知客戶端。</p>
+                    </div>
+                    <button class="neo-button" onclick="navigateToTab('tab-webhooks')">前往 WebHooks 即時通 &rarr;</button>
+                </div>
+                <div class="paradigm-card">
+                    <div>
+                        <h4>WebSockets</h4>
+                        <p>提供一個持久的、雙向的通訊頻道。客戶端和伺服器可以隨時互相發送訊息，適合即時應用。</p>
+                        <p class="text-sm text-gray-400 mt-2">(此網站暫不提供 WebSockets 互動遊戲，但其概念類似即時聊天室的雙向溝通)</p>
+                    </div>
+                </div>
+            </div>
+            <p class="mt-8">不同的典範適用於不同的場景。了解它們的特性有助於您設計出更有效率、更易於維護的 API。</p>
+        </div>
+
+        <div id="tab-rest" class="tab-content">
+            <h2>🛠️ REST API 實戰：餐廳訂單系統</h2>
+            <p>REST API 以「資源」為中心。在這個遊戲中，我們將為一個虛構的餐廳訂單系統設計 API 端點。主要資源是「訂單」(orders)。</p>
+            
+            <div class="grid grid-cols-1 gap-6 mt-6">
+                <div class="paradigm-card"> 
+                    <h3>小遊戲：設計你的訂單 API</h3>
+                    <p class="mb-4"><strong>目標：</strong> 為以下常見的訂單操作選擇正確的 HTTP 方法和設計合適的 URL 路徑。</p>
+                    
+                    <div class="mb-6 p-4 border border-dashed border-gray-600 rounded-lg">
+                        <h4>1. 獲取所有訂單列表</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                            <div>
+                                <label for="rest-q1-method" class="block text-sm font-medium mb-1">HTTP 方法:</label>
+                                <select id="rest-q1-method" class="neo-input">
+                                    <option value="">選擇方法</option>
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="rest-q1-path" class="block text-sm font-medium mb-1">URL 路徑:</label>
+                                <input type="text" id="rest-q1-path" class="neo-input" placeholder="/orders">
+                            </div>
+                            <button class="neo-button mt-4 md:mt-0" onclick="checkRestAnswer('q1', 'GET', '/orders')">檢查答案</button>
+                        </div>
+                        <div id="rest-q1-feedback" class="feedback-message mt-2 hidden"></div>
+                    </div>
+
+                    <div class="mb-6 p-4 border border-dashed border-gray-600 rounded-lg">
+                        <h4>2. 建立一個新訂單</h4>
+                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                            <div>
+                                <label for="rest-q2-method" class="block text-sm font-medium mb-1">HTTP 方法:</label>
+                                <select id="rest-q2-method" class="neo-input">
+                                    <option value="">選擇方法</option>
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="rest-q2-path" class="block text-sm font-medium mb-1">URL 路徑:</label>
+                                <input type="text" id="rest-q2-path" class="neo-input" placeholder="/orders">
+                            </div>
+                            <button class="neo-button mt-4 md:mt-0" onclick="checkRestAnswer('q2', 'POST', '/orders')">檢查答案</button>
+                        </div>
+                        <div id="rest-q2-feedback" class="feedback-message mt-2 hidden"></div>
+                    </div>
+
+                    <div class="p-4 border border-dashed border-gray-600 rounded-lg"> 
+                        <h4>3. 獲取特定 ID 的訂單 (例如 ID: 123)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                            <div>
+                                <label for="rest-q3-method" class="block text-sm font-medium mb-1">HTTP 方法:</label>
+                                <select id="rest-q3-method" class="neo-input">
+                                    <option value="">選擇方法</option>
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="rest-q3-path" class="block text-sm font-medium mb-1">URL 路徑 (用 {id} 代表變數):</label>
+                                <input type="text" id="rest-q3-path" class="neo-input" placeholder="/orders/{id}">
+                            </div>
+                            <button class="neo-button mt-4 md:mt-0" onclick="checkRestAnswer('q3', 'GET', '/orders/{id}')">檢查答案</button>
+                        </div>
+                        <div id="rest-q3-feedback" class="feedback-message mt-2 hidden"></div>
+                    </div>
+                     <p class="text-sm text-gray-400 mt-4">提示：RESTful API 通常使用名詞表示資源 (如 `orders`)，並使用 HTTP 方法 (GET, POST, PUT, DELETE) 表示對資源的操作。路徑參數 (如 `{id}`) 用於指定特定資源。</p>
+                </div>
+
+                <div class="paradigm-card"> 
+                    <h3>REST API 模擬器</h3>
+                    <p class="mb-4">試著定義一個資源和操作，看看模擬的請求和回應會是什麼樣子。</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="rest-sim-resource" class="block text-sm font-medium mb-1">資源名稱 (例如: users, products):</label>
+                            <input type="text" id="rest-sim-resource" class="neo-input" value="products">
+                        </div>
+                        <div>
+                            <label for="rest-sim-method" class="block text-sm font-medium mb-1">HTTP 方法:</label>
+                            <select id="rest-sim-method" class="neo-input">
+                                <option value="GET">GET (讀取)</option>
+                                <option value="POST">POST (建立)</option>
+                                <option value="PUT">PUT (更新/替換)</option>
+                                <option value="DELETE">DELETE (刪除)</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="rest-sim-path-param" class="block text-sm font-medium mb-1">路徑參數 (選填，例如: 101):</label>
+                            <input type="text" id="rest-sim-path-param" class="neo-input" placeholder="若要操作特定資源，請填入 ID">
+                        </div>
+                         <div class="md:col-span-2">
+                            <label for="rest-sim-body" class="block text-sm font-medium mb-1">請求內容 (Request Body - POST/PUT 時使用, JSON 格式):</label>
+                            <textarea id="rest-sim-body" rows="3" class="neo-input" placeholder='{ "name": "新產品", "price": 99.99 }'></textarea>
+                        </div>
+                    </div>
+                    <button class="neo-button mt-4" onclick="simulateRestApi()">模擬請求</button>
+                    
+                    <div id="rest-sim-output" class="mt-4 hidden">
+                        <h4>模擬結果:</h4>
+                        <p><strong>請求:</strong></p>
+                        <pre id="rest-sim-request" class="code-block"></pre>
+                        <p class="mt-2"><strong>典型回應 (範例):</strong></p>
+                        <pre id="rest-sim-response" class="code-block"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-graphql" class="tab-content">
+            <h2>✨ GraphQL API 體驗：電影資料庫</h2>
+            <p>GraphQL 允許客戶端精確指定它需要的資料。在這個遊戲中，您將為一個電影資料庫構建查詢。</p>
+
+            <div class="grid grid-cols-1 gap-6 mt-6">
+                <div class="paradigm-card">
+                    <h3>小遊戲：構建你的電影查詢</h3>
+                    <p class="mb-4"><strong>目標：</strong> 假設我們有一個電影 (Movie) 型別，它有以下欄位：`title` (標題), `director` (導演), `year` (年份), `genre` (類型), `actors` (演員列表)。請勾選您想查詢的電影資訊。</p>
+                    
+                    <div class="mb-4">
+                        <label class="block font-medium mb-2">選擇您想查詢的電影欄位：</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <div><input type="checkbox" id="gql-field-title" value="title" class="mr-2 gql-field">標題 (title)</div>
+                            <div><input type="checkbox" id="gql-field-director" value="director" class="mr-2 gql-field">導演 (director)</div>
+                            <div><input type="checkbox" id="gql-field-year" value="year" class="mr-2 gql-field">年份 (year)</div>
+                            <div><input type="checkbox" id="gql-field-genre" value="genre" class="mr-2 gql-field">類型 (genre)</div>
+                            <div><input type="checkbox" id="gql-field-actors" value="actors" class="mr-2 gql-field">演員 (actors)</div>
+                        </div>
+                    </div>
+                    <button class="neo-button" onclick="generateGraphqlQuery()">產生 GraphQL 查詢</button>
+
+                    <div id="gql-game-output" class="mt-4 hidden">
+                        <h4>您構建的查詢:</h4>
+                        <pre id="gql-game-query" class="code-block"></pre>
+                        <h4>模擬回應 (範例):</h4>
+                        <pre id="gql-game-response" class="code-block"></pre>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-4">提示：GraphQL 查詢看起來像 JSON，但只有鍵名。您可以巢狀查詢相關資料，但此遊戲簡化為單一層級查詢。</p>
+                </div>
+
+                <div class="paradigm-card">
+                    <h3>GraphQL 模擬器</h3>
+                    <p class="mb-4">試著手動編寫一個簡單的 GraphQL 查詢 (針對虛構的 `user` 型別，它有 `id`, `name`, `email`, `posts { title }` 欄位)。</p>
+                    <label for="gql-sim-query" class="block text-sm font-medium mb-1">輸入您的 GraphQL 查詢:</label>
+                    <textarea id="gql-sim-query" rows="6" class="neo-input" placeholder="query {\n  user(id: \"1\") {\n    name\n    email\n  }\n}"></textarea>
+                    <button class="neo-button mt-4" onclick="simulateGraphqlApi()">模擬查詢</button>
+
+                    <div id="gql-sim-output" class="mt-4 hidden">
+                        <h4>模擬回應:</h4>
+                        <pre id="gql-sim-response" class="code-block"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-webhooks" class="tab-content">
+            <h2>🔔 WebHooks 即時通：訂單狀態更新</h2>
+            <p>WebHooks 是一種事件驅動的機制。當特定事件發生時，服務會向您提供的 URL 發送一個 HTTP POST 請求。</p>
+
+            <div class="grid grid-cols-1 gap-6 mt-6">
+                <div class="paradigm-card">
+                    <h3>小遊戲：設定您的 WebHook 監聽器</h3>
+                    <p class="mb-4"><strong>目標：</strong> 想像您有一個電商網站，希望在訂單發貨時收到即時通知。您需要提供一個 WebHook URL 來接收這些通知。</p>
+                    
+                    <div class="mb-4">
+                        <label for="wh-game-url" class="block text-sm font-medium mb-1">您的 (模擬) WebHook URL:</label>
+                        <input type="text" id="wh-game-url" class="neo-input" placeholder="https://your-service.com/webhook-receiver">
+                    </div>
+                    <button class="neo-button" onclick="simulateWebhookEvent()">模擬「訂單已發貨」事件</button>
+
+                    <div id="wh-game-output" class="mt-4 hidden">
+                        <h4>WebHook 事件模擬:</h4>
+                        <p>一個 POST 請求已發送到您的模擬 URL：<strong id="wh-game-sent-url"></strong></p>
+                        <p>帶有以下 Payload (內容):</p>
+                        <pre id="wh-game-payload" class="code-block"></pre>
+                        <p class="feedback-info mt-2">在真實世界中，您的伺服器需要在提供的 URL 上監聽傳入的 POST 請求，並處理這些 Payload。</p>
+                    </div>
+                     <p class="text-sm text-gray-400 mt-4">提示：WebHook 的安全性很重要。真實應用中，通常會使用簽名驗證來確保請求來自可信的來源。</p>
+                </div>
+
+                <div class="paradigm-card">
+                    <h3>WebHook 模擬器</h3>
+                    <p class="mb-4">定義一個事件和其 Payload，然後模擬觸發 WebHook。</p>
+                    <div>
+                        <label for="wh-sim-event" class="block text-sm font-medium mb-1">事件類型 (例如: user_created, payment_success):</label>
+                        <input type="text" id="wh-sim-event" class="neo-input" value="new_comment">
+                    </div>
+                    <div class="mt-2">
+                        <label for="wh-sim-payload" class="block text-sm font-medium mb-1">事件 Payload (JSON 格式):</label>
+                        <textarea id="wh-sim-payload" rows="4" class="neo-input" placeholder='{ "comment_id": "c_789", "post_id": "p_123", "author": "Alice", "text": "Great post!" }'></textarea>
+                    </div>
+                    <div class="mt-2">
+                        <label for="wh-sim-target-url" class="block text-sm font-medium mb-1">目標 WebHook URL:</label>
+                        <input type="text" id="wh-sim-target-url" class="neo-input" value="https://api.example.com/my-webhook-handler">
+                    </div>
+                    <button class="neo-button mt-4" onclick="simulateWebhookTrigger()">觸發 WebHook</button>
+
+                    <div id="wh-sim-output" class="mt-4 hidden feedback-info">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tab-rpc" class="tab-content">
+            <h2>📞 RPC (Remote Procedure Call) 概念</h2>
+            <p>RPC 典範的核心是「動作」或「函式呼叫」。客戶端直接呼叫遠端伺服器上定義好的程序或函式，並傳遞必要的參數。</p>
+            <p>相較於 REST (以資源為中心)，RPC 更關注於「執行什麼操作」。</p>
+            
+            <div class="grid grid-cols-1 gap-6 mt-6">
+                <div class="paradigm-card"> 
+                    <h3>RPC 的特點：</h3>
+                    <ul style="padding-left: 1.2em;"> 
+                        <li><strong>簡單直觀：</strong> 概念上類似於本地函式呼叫，容易理解。</li>
+                        <li><strong>效能潛力：</strong> 可以使用如 gRPC 等高效能的二進位協議，但也可以透過 HTTP (通常是 POST) 實現。</li>
+                        <li><strong>關注動作：</strong> 當 API 的主要目的是執行特定動作時 (例如 `calculatePrice`, `sendMessage`, `archiveDocument`)，RPC 可能更合適。</li>
+                        <li><strong>端點設計：</strong> URL 端點通常會包含動作名稱，例如 `/UserService/GetUser` 或 `/PaymentService/ProcessPayment`。</li>
+                    </ul>
+
+                    <h3 class="mt-4">一個簡單的 RPC-style (透過 HTTP POST) 請求範例：</h3>
+                    <p>假設我們要呼叫一個 `UserService` 中的 `CreateUser` 函式：</p>
+                    <pre class="code-block">
+<strong>POST</strong> /rpc/user-service
+<strong>Host:</strong> api.example.com
+<strong>Content-Type:</strong> application/json
+
+{
+  "method": "CreateUser",
+  "params": {
+    "username": "john_doe",
+    "email": "john.doe@example.com",
+    "age": 30
+  },
+  "id": "request-123" <span class="comment">// 請求 ID，用於追蹤</span>
+}
+                    </pre>
+                    <p>伺服器可能會這樣回應：</p>
+                    <pre class="code-block">
+<strong>HTTP/1.1 200 OK</strong>
+<strong>Content-Type:</strong> application/json
+
+{
+  "result": {
+    "userId": "user_abc_123",
+    "status": "created"
+  },
+  "error": null,
+  "id": "request-123"
+}
+                    </pre>
+                     <p class="mt-6 text-sm text-gray-400">注意：這是一個簡化的 HTTP RPC 模擬。像 gRPC 這樣的現代 RPC 框架使用更高效的協議 (如 Protocol Buffers) 和更複雜的機制。</p>
+                </div>
+
+                <div class="paradigm-card"> 
+                    <h3>RPC 模擬器 (HTTP-based)</h3>
+                    <p class="mb-4">試著定義一個遠端函式呼叫，看看模擬的請求會是什麼樣子。</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="rpc-sim-service" class="block text-sm font-medium mb-1">服務/模組名稱 (例如: CalculatorService):</label>
+                            <input type="text" id="rpc-sim-service" class="neo-input" value="OrderService">
+                        </div>
+                        <div>
+                            <label for="rpc-sim-method" class="block text-sm font-medium mb-1">方法/函式名稱 (例如: Add, GetUserDetails):</label>
+                            <input type="text" id="rpc-sim-method" class="neo-input" value="PlaceOrder">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="rpc-sim-params" class="block text-sm font-medium mb-1">參數 (JSON 物件格式, 例如: {"a": 5, "b": 10}):</label>
+                            <textarea id="rpc-sim-params" rows="3" class="neo-input" placeholder='{ "productId": "prod_xyz", "quantity": 2, "customerNotes": "Gift wrap please" }'></textarea>
+                        </div>
+                    </div>
+                    <button class="neo-button mt-4" onclick="simulateRpcCall()">模擬 RPC 呼叫</button>
+                    
+                    <div id="rpc-sim-output" class="mt-4 hidden">
+                        <h4>模擬 RPC 請求 (透過 HTTP POST):</h4>
+                        <pre id="rpc-sim-request" class="code-block"></pre>
+                        <h4>模擬 RPC 回應 (範例):</h4>
+                        <pre id="rpc-sim-response" class="code-block"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 預設開啟第一個分頁
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.tab-button').click();
+            // 初始化 GraphQL 遊戲的勾選框事件監聽
+            document.querySelectorAll('.gql-field').forEach(checkbox => {
+                checkbox.addEventListener('change', generateGraphqlQuery);
+            });
+        });
+
+        function openTab(event, tabId) {
+            // 隱藏所有分頁內容
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // 移除所有按鈕的 active 狀態
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => button.classList.remove('active'));
+
+            // 顯示目標分頁內容並設定按鈕為 active
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+        
+        function navigateToTab(tabId) {
+            // 找到對應的按鈕並觸發點擊
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => {
+                if (button.getAttribute('onclick').includes(tabId)) {
+                    button.click();
+                }
+            });
+        }
+
+        // --- REST API 遊戲與模擬器邏輯 ---
+        function checkRestAnswer(questionId, correctMethod, correctPath) {
+            const method = document.getElementById(`rest-${questionId}-method`).value;
+            const path = document.getElementById(`rest-${questionId}-path`).value.trim();
+            const feedbackEl = document.getElementById(`rest-${questionId}-feedback`);
+            
+            feedbackEl.classList.remove('hidden', 'feedback-success', 'feedback-error');
+            if (method === correctMethod && path === correctPath) {
+                feedbackEl.textContent = '正確！這是一個符合 RESTful 風格的好設計。👍';
+                feedbackEl.classList.add('feedback-success');
+            } else {
+                let errorMsg = '不太對喔。';
+                if (method !== correctMethod) errorMsg += ` HTTP 方法應該是 ${correctMethod}。`;
+                if (path !== correctPath) errorMsg += ` URL 路徑建議是 ${correctPath}。`;
+                feedbackEl.textContent = errorMsg + ' 再試試看！';
+                feedbackEl.classList.add('feedback-error');
+            }
+        }
+
+        function simulateRestApi() {
+            const resource = document.getElementById('rest-sim-resource').value.trim() || 'items';
+            const method = document.getElementById('rest-sim-method').value;
+            const pathParam = document.getElementById('rest-sim-path-param').value.trim();
+            const body = document.getElementById('rest-sim-body').value.trim();
+
+            let url = `/${resource}`;
+            if (pathParam) {
+                url += `/${pathParam}`;
+            }
+
+            let requestText = `<strong>${method}</strong> ${url}\n<strong>Host:</strong> api.example.com`;
+            if ((method === 'POST' || method === 'PUT') && body) {
+                requestText += `\n<strong>Content-Type:</strong> application/json\n\n${body}`;
+            }
+
+            document.getElementById('rest-sim-request').innerHTML = requestText;
+
+            let responseText = `<strong>HTTP/1.1</strong> `;
+            let mockData = {};
+
+            switch (method) {
+                case 'GET':
+                    responseText += `200 OK\n<strong>Content-Type:</strong> application/json\n\n`;
+                    if (pathParam) {
+                        mockData = { id: pathParam, name: `範例${resource.slice(0,-1)}`, value: "一些資料" };
+                    } else {
+                        mockData = [
+                            { id: "1", name: `範例${resource.slice(0,-1)} A`, value: "資料A" },
+                            { id: "2", name: `範例${resource.slice(0,-1)} B`, value: "資料B" }
+                        ];
+                    }
+                    responseText += JSON.stringify(mockData, null, 2);
+                    break;
+                case 'POST':
+                    responseText += `201 Created\n<strong>Content-Type:</strong> application/json\n\n`;
+                    try {
+                        const parsedBody = JSON.parse(body || '{}');
+                        mockData = { id: "new_" + Math.random().toString(36).substr(2, 5), ...parsedBody };
+                    } catch (e) {
+                        mockData = { id: "new_item", message: "成功建立 (請求內容解析失敗，使用預設值)"};
+                    }
+                    responseText += JSON.stringify(mockData, null, 2);
+                    break;
+                case 'PUT':
+                    responseText += `200 OK\n<strong>Content-Type:</strong> application/json\n\n`;
+                     try {
+                        const parsedBody = JSON.parse(body || '{}');
+                        mockData = { id: pathParam || "updated_item", ...parsedBody };
+                    } catch (e) {
+                        mockData = { id: pathParam || "updated_item", message: "成功更新 (請求內容解析失敗，使用預設值)"};
+                    }
+                    responseText += JSON.stringify(mockData, null, 2);
+                    break;
+                case 'DELETE':
+                    responseText += `204 No Content\n\n`; // DELETE 通常不返回內容
+                    break;
+            }
+            document.getElementById('rest-sim-response').innerHTML = responseText;
+            document.getElementById('rest-sim-output').classList.remove('hidden');
+        }
+
+        // --- GraphQL API 遊戲與模擬器邏輯 ---
+        function generateGraphqlQuery() {
+            const fields = [];
+            document.querySelectorAll('.gql-field:checked').forEach(checkbox => {
+                fields.push(`    ${checkbox.value}`);
+            });
+
+            const outputDiv = document.getElementById('gql-game-output');
+            const queryPre = document.getElementById('gql-game-query');
+            const responsePre = document.getElementById('gql-game-response');
+
+            if (fields.length === 0) {
+                queryPre.textContent = "// 請至少選擇一個欄位";
+                responsePre.textContent = "// 等待有效的查詢";
+                outputDiv.classList.remove('hidden'); // 顯示提示
+                return;
+            }
+
+            const query = `query GetMovieInfo {\n  movie {\n${fields.join('\n')}\n  }\n}`;
+            queryPre.textContent = query;
+
+            // 模擬回應
+            const mockResponse = {
+                data: {
+                    movie: {}
+                }
+            };
+            if (document.getElementById('gql-field-title').checked) mockResponse.data.movie.title = "星際大戰：新希望";
+            if (document.getElementById('gql-field-director').checked) mockResponse.data.movie.director = "喬治·盧卡斯";
+            if (document.getElementById('gql-field-year').checked) mockResponse.data.movie.year = 1977;
+            if (document.getElementById('gql-field-genre').checked) mockResponse.data.movie.genre = "科幻";
+            if (document.getElementById('gql-field-actors').checked) mockResponse.data.movie.actors = ["馬克·漢米爾", "哈里遜·福特", "嘉莉·費雪"];
+            
+            responsePre.textContent = JSON.stringify(mockResponse, null, 2);
+            outputDiv.classList.remove('hidden');
+        }
+        
+        function simulateGraphqlApi() {
+            const query = document.getElementById('gql-sim-query').value;
+            const outputDiv = document.getElementById('gql-sim-output');
+            const responsePre = document.getElementById('gql-sim-response');
+
+            if (!query.trim()) {
+                responsePre.textContent = "// 請輸入 GraphQL 查詢";
+                outputDiv.classList.remove('hidden');
+                return;
+            }
+            
+            // 非常簡化的模擬回應邏輯
+            let mockResponseData = { data: {} };
+            if (query.includes("user")) {
+                mockResponseData.data.user = {};
+                if (query.includes("name")) mockResponseData.data.user.name = "模擬使用者";
+                if (query.includes("email")) mockResponseData.data.user.email = "user@example.com";
+                if (query.includes("id")) mockResponseData.data.user.id = query.match(/id:\s*"([^"]+)"/) ? query.match(/id:\s*"([^"]+)"/)[1] : "1";
+                if (query.includes("posts") && query.includes("title")) {
+                    mockResponseData.data.user.posts = [
+                        { title: "我的第一篇文章" },
+                        { title: "GraphQL 真酷" }
+                    ];
+                }
+            } else {
+                 mockResponseData.data.error = "不支援的查詢型別 (僅模擬 user)";
+            }
+
+            responsePre.textContent = JSON.stringify(mockResponseData, null, 2);
+            outputDiv.classList.remove('hidden');
+        }
+
+        // --- WebHooks 遊戲與模擬器邏輯 ---
+        function simulateWebhookEvent() {
+            const url = document.getElementById('wh-game-url').value.trim();
+            const outputDiv = document.getElementById('wh-game-output');
+            const sentUrlEl = document.getElementById('wh-game-sent-url');
+            const payloadEl = document.getElementById('wh-game-payload');
+
+            if (!url) {
+                alert("請輸入一個模擬 WebHook URL！");
+                return;
+            }
+
+            sentUrlEl.textContent = url;
+            const payload = {
+                event: "order_shipped",
+                order_id: "ORD_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                timestamp: new Date().toISOString(),
+                tracking_number: "TN" + Math.floor(Math.random() * 1000000000)
+            };
+            payloadEl.textContent = JSON.stringify(payload, null, 2);
+            outputDiv.classList.remove('hidden');
+        }
+
+        function simulateWebhookTrigger() {
+            const eventType = document.getElementById('wh-sim-event').value.trim();
+            const payloadStr = document.getElementById('wh-sim-payload').value.trim();
+            const targetUrl = document.getElementById('wh-sim-target-url').value.trim();
+            const outputEl = document.getElementById('wh-sim-output');
+
+            if (!eventType || !payloadStr || !targetUrl) {
+                outputEl.textContent = "請填寫所有欄位：事件類型、Payload 和目標 URL。";
+                outputEl.className = 'mt-4 feedback-error'; // 重置 class
+                outputEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                JSON.parse(payloadStr); // 驗證 JSON
+            } catch (e) {
+                outputEl.textContent = "Payload 格式錯誤，請確認是有效的 JSON。";
+                outputEl.className = 'mt-4 feedback-error';
+                outputEl.classList.remove('hidden');
+                return;
+            }
+            
+            outputEl.innerHTML = `模擬發送事件...<br>
+                <strong>事件類型:</strong> ${eventType}<br>
+                <strong>目標 URL:</strong> ${targetUrl}<br>
+                <strong>Payload:</strong><pre class="code-block mt-1">${payloadStr}</pre>
+                <p class="mt-2">一個 HTTP POST 請求 (包含上述 Payload) 已被模擬發送到目標 URL。</p>`;
+            outputEl.className = 'mt-4 feedback-info'; // 重置 class
+            outputEl.classList.remove('hidden');
+        }
+        
+        // --- RPC 模擬器邏輯 ---
+        function simulateRpcCall() {
+            const serviceName = document.getElementById('rpc-sim-service').value.trim() || 'UnknownService';
+            const methodName = document.getElementById('rpc-sim-method').value.trim() || 'unknownMethod';
+            const paramsStr = document.getElementById('rpc-sim-params').value.trim();
+            const outputDiv = document.getElementById('rpc-sim-output');
+            const requestPre = document.getElementById('rpc-sim-request');
+            const responsePre = document.getElementById('rpc-sim-response');
+
+            let paramsObj = {};
+            if (paramsStr) {
+                try {
+                    paramsObj = JSON.parse(paramsStr);
+                } catch (e) {
+                    requestPre.textContent = "// 參數 JSON 格式錯誤";
+                    responsePre.textContent = "";
+                    outputDiv.classList.remove('hidden');
+                    return;
+                }
+            }
+
+            const rpcRequestPayload = {
+                jsonrpc: "2.0", // or just method/params for simpler RPC
+                method: `${serviceName}.${methodName}`, // Common practice to combine
+                params: paramsObj,
+                id: "rpc-sim-" + Math.random().toString(36).substr(2, 5)
+            };
+
+            requestPre.textContent = `POST /rpc\nHost: api.example.com\nContent-Type: application/json\n\n` +
+                                 JSON.stringify(rpcRequestPayload, null, 2);
+            
+            // 模擬回應
+            const mockRpcResponse = {
+                jsonrpc: "2.0",
+                result: {
+                    status: "success",
+                    message: `方法 ${methodName} 已在 ${serviceName} 上成功模擬執行。`,
+                    data: { inputParams: paramsObj, processedAt: new Date().toLocaleTimeString() }
+                },
+                id: rpcRequestPayload.id
+            };
+            responsePre.textContent = JSON.stringify(mockRpcResponse, null, 2);
+            outputDiv.classList.remove('hidden');
+        }
+
+    </script>
+</body>
+</html>
